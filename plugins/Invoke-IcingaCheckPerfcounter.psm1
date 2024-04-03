@@ -19,12 +19,26 @@
     PS> Invoke-IcingaCheckPerfCounter -PerfCounter '\processor(*)\% processor time' -Warning 60 -Critical 90
     [WARNING]: Check package "Performance Counter" is [WARNING]
     | 'processor1_processor_time'=68.95;60;90 'processor3_processor_time'=4.21;60;90 'processor5_processor_time'=9.5;60;90 'processor_Total_processor_time'=20.6;60;90 'processor0_processor_time'=5.57;60;90 'processor2_processor_time'=0;60;90 'processor4_processor_time'=6.66;60;90
+.EXAMPLE
+    PS> Invoke-IcingaCheckPerfCounter -PerfCounter @('\processor(*)\% processor time', '\Memory\Available Bytes') -Warnings @('Warning-\processor(*)\% processor time=10', 'Warning-\Memory\Available Bytes=1048576') -Criticals @('Critical-\processor(*)\% processor time=20', 'Critical-\Memory\Available Bytes=1048576') -NoPerfData -Verbosity 2}
+    [CRITICAL] Performance Counter [CRITICAL] \Memory\Available Bytes, \processor(*)\% processor time
+    \_ [CRITICAL] \Memory\Available Bytes
+        \_ [CRITICAL] \Memory\Available Bytes: 1508471000 is greater than threshold 1048576
+    \_ [CRITICAL] \processor(*)\% processor time
+        \_ [CRITICAL] \processor(_Total)\% processor time: 35.3699 is greater than threshold 20
+        \_ [CRITICAL] \processor(0)\% processor time: 60.92133 is greater than threshold 20
+        \_ [CRITICAL] \processor(1)\% processor time: 27.85477 is greater than threshold 20
+        \_ [CRITICAL] \processor(2)\% processor time: 60.58743 is greater than threshold 20
+        \_ [OK] \processor(3)\% processor time: 12.82452
+    2
 .PARAMETER PerfCounter
     Used to specify an array of performance counter to check against.
-.PARAMETER Warning
-    Used to specify a Warning threshold.
-.PARAMETER Critical
-    Used to specify a Critical threshold.
+.PARAMETER Warnings
+    An [array] of strings to set warning thresholds for each checked performance counter. Thresholds have to be defined as follows: "Warning-CounterName=ThresholdValue"
+    E.g. for the counter "\processor()% processor time" the treshold has to be defined as follows: "Warning-\processor()% processor time=10"
+.PARAMETER Criticals
+    An [array] of strings to set critical thresholds for each checked performance counter. Thresholds have to be defined as follows: "Critical-CounterName=ThresholdValue"
+    E.g. for the counter "\processor()% processor time" the treshold has to be defined as follows: "Critical-\processor()% processor time=20"
 .PARAMETER IncludeCounter
     An [array] of strings to filter for, only including the provided counters. Allows
     wildcard "*" usage
@@ -55,8 +69,8 @@ function Invoke-IcingaCheckPerfCounter()
 {
     param(
         [array]$PerfCounter,
-        $Warning                   = $null,
-        $Critical                  = $null,
+        [array]$Warnings           = @(),
+        [array]$Criticals          = @(),
         [array]$IncludeCounter     = @(),
         [array]$ExcludeCounter     = @(),
         [switch]$IgnoreEmptyChecks = $FALSE,
@@ -64,6 +78,18 @@ function Invoke-IcingaCheckPerfCounter()
         [ValidateSet(0, 1, 2, 3)]
         [int]$Verbosity            = 0
     );
+
+    foreach ($entry in $Warnings) {
+        $WarningName = ($entry -split "=")[0]
+        $WarningValue = ($entry -split "=")[1]
+        New-Variable -Name $WarningName -Value $WarningValue -Force
+    }
+
+    foreach ($entry in $Criticals) {
+        $CriticalName = ($entry -split "=")[0]
+        $CriticalValue = ($entry -split "=")[1]
+        New-Variable -Name $CriticalName -Value $CriticalValue -Force
+    }
 
     $Counters     = New-IcingaPerformanceCounterArray -CounterArray $PerfCounter;
     $CheckPackage = New-IcingaCheckPackage -Name 'Performance Counter' -OperatorAnd -Verbose $Verbosity -IgnoreEmptyPackage:$IgnoreEmptyChecks;
@@ -109,14 +135,18 @@ function Invoke-IcingaCheckPerfCounter()
             if ($instance -IsNot [hashtable]) {
                 $CounterInfo = Get-IcingaPerformanceCounterDetails -Counter $counter;
                 $IcingaCheck = New-IcingaCheck -Name $counter -Value $Counters[$counter].Value -MetricIndex $CounterInfo.Category -MetricName $CounterInfo.Counter;
-                $IcingaCheck.WarnOutOfRange($Warning).CritOutOfRange($Critical) | Out-Null;
+                $IcingaCheckWarning = Get-Variable -Name "Warning-$counter" -ValueOnly -ea ignore
+                $IcingaCheckCritical = Get-Variable -Name "Critical-$counter" -ValueOnly -ea ignore
+                $IcingaCheck.WarnOutOfRange($IcingaCheckWarning).CritOutOfRange($IcingaCheckCritical) | Out-Null;
                 $CounterPackage.AddCheck($IcingaCheck);
                 break;
             }
 
             $CounterInfo = Get-IcingaPerformanceCounterDetails -Counter $instanceName;
             $IcingaCheck = New-IcingaCheck -Name $instanceName -Value $instance.Value -MetricIndex $CounterInfo.Category -MetricName $CounterInfo.CounterInstance;
-            $IcingaCheck.WarnOutOfRange($Warning).CritOutOfRange($Critical) | Out-Null;
+            $IcingaCheckWarning = Get-Variable -Name "Warning-$counter" -ValueOnly -ea ignore
+            $IcingaCheckCritical = Get-Variable -Name "Critical-$counter" -ValueOnly -ea ignore
+            $IcingaCheck.WarnOutOfRange($IcingaCheckWarning).CritOutOfRange($IcingaCheckCritical) | Out-Null;
             $CounterPackage.AddCheck($IcingaCheck);
         }
 
