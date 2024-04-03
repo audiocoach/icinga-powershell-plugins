@@ -231,9 +231,18 @@ function Invoke-IcingaCheckDiskHealth()
                 $DiskReadOnlyCheck.WarnIfMatch('True') | Out-Null;
             }
 
+            $DiskHealthStatusCheck = New-IcingaCheck `
+                -Name ([string]::Format('{0} Health Status', $Partition)) `
+                -Value ([string]$DiskObjects.Data.HealthStatus.Name) `
+                -NoPerfData;
+            $DiskHealthStatusCheck.WarnIfMatch('Warning') | Out-Null;
+            $DiskHealthStatusCheck.CritIfMatch('Unhealthy') | Out-Null;
+            $DiskHealthStatusCheck.CritIfMatch('Unknown') | Out-Null;
+
             # Check for Disk OperationalStatus
             $PartCheckPackage.AddCheck($DiskOfflineCheck);
             $PartCheckPackage.AddCheck($DiskReadOnlyCheck);
+            $PartCheckPackage.AddCheck($DiskHealthStatusCheck);
 
             $PartCheckPackage.AddCheck(
                 (

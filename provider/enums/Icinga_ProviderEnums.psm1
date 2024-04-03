@@ -174,6 +174,14 @@
     5 = 'SCM';
 };
 
+# https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-physicaldisk
+[hashtable]$DiskHealthStatus = @{
+    0 = 'Healthy';
+    1 = 'Warning';
+    2 = 'Unhealthy';
+    5 = 'Unknown';
+};
+
 <#################################################################################################
 ################### /lib/provider/Networkdevices #################################################
 #################################################################################################>
@@ -1020,6 +1028,7 @@
     #/lib/provider/disks
     DiskCapabilities                = $DiskCapabilities;
     DiskBusType                     = $DiskBusType;
+    DiskHealthStatus                = $DiskHealthStatus;
     DiskOperationalStatus           = $DiskOperationalStatus;
     DiskOperationalStatusName       = $DiskOperationalStatusName;
     DiskMediaType                   = $DiskMediaType;
