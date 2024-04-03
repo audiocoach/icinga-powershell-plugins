@@ -132,6 +132,10 @@
     15     = 'Dormant';
     16     = 'Supporting Entity in Error';
     17     = 'Completed';
+    18     = 'Power Mode';
+    19     = 'Relocating';
+    0xD002 = 'Detached';
+    0xD003 = 'Incomplete';
     0xD010 = 'Online';
     0xD011 = 'Not Ready';
     0xD012 = 'No Media';
@@ -159,6 +163,10 @@
     'Dormant'                    = 15;
     'Supporting Entity in Error' = 16;
     'Completed'                  = 17;
+    'Power Mode'                 = 18;
+    'Relocating'                 = 19;
+    'Detached'                   = 0xD002;
+    'Incomplete'                 = 0xD003;
     'Online'                     = 0xD010;
     'Not Ready'                  = 0xD011;
     'No Media'                   = 0xD012;
