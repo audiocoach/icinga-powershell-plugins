@@ -432,5 +432,61 @@ function Invoke-IcingaCheckDiskHealth()
         $CheckPackage.AddCheck($PartCheckPackage);
     }
 
+    #Storage Subsystem Health
+
+    $SortedStorageSubsystems = Get-IcingaStorageSubsystemInfo
+
+    $StorageSubsystemCheckPackage = New-IcingaCheckPackage `
+        -Name 'Storage Subsystems' `
+        -OperatorAnd `
+        -Verbose $Verbosity `
+        -AddSummaryHeader;
+
+    foreach ($entry in $SortedStorageSubsystems) {
+
+        $StorageSubsystemObjects = $SortedStorageSubsystems[$entry];
+
+        $PartStorageSubsystemCheckPackage = New-IcingaCheckPackage `
+            -Name $entry.FriendlyName `
+            -OperatorAnd `
+            -Verbose $Verbosity `
+            -AddSummaryHeader;
+
+        $StorageSubsystemHealthStatusCheck = New-IcingaCheck `
+            -Name "Health Status" `
+            -Value $entry.HealthStatus  `
+            -NoPerfData;
+        $StorageSubsystemHealthStatusCheck.WarnIfMatch('Warning') | Out-Null;
+        $StorageSubsystemHealthStatusCheck.CritIfMatch('Unhealthy') | Out-Null;
+        $PartStorageSubsystemCheckPackage.AddCheck($StorageSubsystemHealthStatusCheck);
+
+        $StorageSubsystemOperationalStatusPackage = New-IcingaCheckPackage -Name "Operational Status" -OperatorAnd -IgnoreEmptyPackage -Verbose $Verbosity;
+
+        foreach ($OperationalStatusData in $SortedStorageSubsystems.OperationalStatus.Keys) {
+            $OperationalStatusValue      = $SortedStorageSubsystems.OperationalStatus[$OperationalStatusData];
+            $OperationalStatusCheck      = New-IcingaCheck -Name $OperationalStatusValue  -NoPerfData;
+            $OperationalStatusProblemName      = $OperationalStatusData;
+
+            if ($ProviderEnums.StorageOperationalStatus.ContainsKey($OperationalStatusData)) {
+                $OperationalStatusProblemName = $ProviderEnums.StorageOperationalStatus[$OperationalStatusData];
+            }
+
+            if ($OperationalStatusData -ne $ProviderEnums.StorageOperationalStatusName.Ok -And $OperationalStatusData -ne $ProviderEnums.StorageOperationalStatusName.Online) {
+                $OperationalStatusCheck.SetCritical([string]::Format('Problem detected: {0}', $OperationalStatusProblemName), $TRUE) | Out-Null;
+            } else {
+                $OperationalStatusCheck.SetOk('No problems found', $TRUE) | Out-Null;
+            }
+
+            $StorageSubsystemOperationalStatusPackage.AddCheck($OperationalStatusCheck);
+        }
+
+        $PartStorageSubsystemCheckPackage.AddCheck($StorageSubsystemOperationalStatusPackage);
+
+        $StorageSubsystemCheckPackage.AddCheck($PartStorageSubsystemCheckPackage);
+
+    }
+
+    $CheckPackage.AddCheck($StorageSubsystemCheckPackage);
+
     return (New-IcingaCheckResult -Check $CheckPackage -NoPerfData $NoPerfData -Compile);
 }
