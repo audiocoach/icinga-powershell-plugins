@@ -292,7 +292,7 @@ function Global:Get-IcingaPhysicalDiskInfo()
     }
 
     foreach ($disk in $StorageSpacesDisks) {
-        [string]$DiskId   = $disk.DeviceId.ToString().Replace('\\.\PHYSICALDRIVE', '');
+        [int]$DiskId   = $disk.DeviceId.ToString().Replace('\\.\PHYSICALDRIVE', '');
 
         if ($DiskIds.Count -ne 0) {
             if (-Not ($DiskIds -Contains $DiskId)) {
@@ -491,7 +491,7 @@ function Global:Get-IcingaPhysicalDiskInfo()
             }
 
             $DiskInfo.OperationalStatus = $OperationalStatus;
-        } 
+        }
         else {
             $DiskInfo.OperationalStatus= @{ 0 = 'Unknown'; };
         }
