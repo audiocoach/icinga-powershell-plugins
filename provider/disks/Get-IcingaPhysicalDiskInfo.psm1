@@ -293,6 +293,7 @@ function Global:Get-IcingaPhysicalDiskInfo()
 
     foreach ($disk in $StorageSpacesDisks) {
         [int]$DiskId   = $disk.DeviceId.ToString().Replace('\\.\PHYSICALDRIVE', '');
+        [string]$DiskIdString   = $disk.DeviceId.ToString().Replace('\\.\PHYSICALDRIVE', '');
 
         if ($DiskIds.Count -ne 0) {
             if (-Not ($DiskIds -Contains $DiskId)) {
@@ -377,8 +378,8 @@ function Global:Get-IcingaPhysicalDiskInfo()
             $DriveLetter            = $null;
             [string]$PartitionIndex = $partition.Index;
 
-            if ($PartitionInformation.ContainsKey($DiskId) -And $PartitionInformation[$DiskId].Partitions.ContainsKey($PartitionIndex)) {
-                $DriveLetter = $PartitionInformation[$DiskId].Partitions[$PartitionIndex];
+            if ($PartitionInformation.ContainsKey($DiskIdString ) -And $PartitionInformation[$DiskIdString ].Partitions.ContainsKey($PartitionIndex)) {
+                $DriveLetter = $PartitionInformation[$DiskIdString].Partitions[$PartitionIndex];
 
                 $DiskInfo.DriveReference.Add(
                     $DriveLetter, $partition.Index
