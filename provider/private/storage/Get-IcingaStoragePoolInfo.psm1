@@ -74,9 +74,20 @@ function Get-IcingaStoragePoolInfo()
         if ($null -ne $Storage.OperationalStatus) {
             $OperationalStatus = @{ };
             foreach ($key in $Storage.OperationalStatus) {
-                Add-IcingaHashtableItem -Hashtable $OperationalStatus -Key ([int]$key) -Value ($ProviderEnums.StorageOperationalStatus[[int]$key]) | Out-Null;
+                if (Test-Numeric $key) {
+                    Add-IcingaHashtableItem -Hashtable $OperationalStatus -Key ([int]$key) -Value (Get-IcingaProviderEnumData -Enum $ProviderEnums -Key 'StorageOperationalStatus' -Index $key) | Out-Null;
+                } else {
+                    if ($ProviderEnums.StorageOperationalStatus.Values -Contains $key) {
+                        foreach ($opStatus in $ProviderEnums.StorageOperationalStatus.Keys) {
+                            $opStatusValue = (Get-IcingaProviderEnumData -Enum $ProviderEnums -Key 'StorageOperationalStatus' -Index $opStatus);
+                            if ($opStatusValue.ToLower() -eq ([string]$key).ToLower()) {
+                                Add-IcingaHashtableItem -Hashtable $OperationalStatus -Key ([int]$opStatus) -Value $key | Out-Null;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
-
             $StoragePoolDetails.OperationalStatus = $OperationalStatus;
         } else {
             $StoragePoolDetails.OperationalStatus = @{ 0 = 'Unknown'; };
