@@ -335,6 +335,26 @@
 }
 
 <##################################################################################################
+######################### /lib/provider/partition ###################################################
+###################################################################################################>
+
+[hashtable]$PartitionOperationalStatus = @{
+    0  = 'Unknown';
+    1  = 'Online';
+    3  = 'No Media';
+    4  = 'Offline';
+    5  = 'Failed';
+}
+
+[hashtable]$PartitionOperationalStatusName = @{
+    'Unknown'                    = 0;
+    'Online'                     = 1;
+    'No Media'                   = 3;
+    'Offline'                    = 4;
+    'Failed'                     = 5;
+}
+
+<##################################################################################################
 ######################### /lib/provider/storage ###################################################
 ###################################################################################################>
 
@@ -1028,6 +1048,9 @@
     DeviceStatus                    = $DeviceStatus;
     DeviceAvailability              = $DeviceAvailability;
     DeviceAvailabilityName          = $DeviceAvailabilityName;
+    #/lib/provider/partition
+    PartitionOperationalStatus      = $PartitionOperationalStatus;
+    PartitionOperationalStatusName  = $PartitionOperationalStatusName;
     #/lib/provider/storage
     StoragePoolUsage                = $StoragePoolUsage;
     StoragePoolUsageName            = $StoragePoolUsageName;

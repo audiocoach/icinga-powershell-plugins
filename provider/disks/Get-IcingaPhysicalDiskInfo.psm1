@@ -121,6 +121,7 @@ function Global:Get-IcingaPhysicalDiskInfo()
             $MaxBlocks = 0;
 
             foreach ($partition in $Partitions) {
+                $AdditionalPartitionData = Get-CimInstance -Class 'MSFT_Partition' -Namespace 'Root/Microsoft/Windows/Storage' | Where-Object { $_.DiskNumber -eq $partition.DiskIndex -and $_.Offset -eq $partition.StartingOffset }
                 $DriveLetter            = $null;
                 [string]$PartitionIndex = $partition.Index;
 
@@ -132,22 +133,32 @@ function Global:Get-IcingaPhysicalDiskInfo()
                     );
                 }
 
+                if (Test-Numeric $AdditionalPartitionData.OperationalStatus) {
+                    $PartitionOperationalStatus = Get-IcingaProviderEnumData -Enum $ProviderEnums -Key 'PartitionOperationalStatus' -Index $AdditionalPartitionData.OperationalStatus;
+                } else {
+                    $PartitionOperationalStatus = $AdditionalPartitionData.OperationalStatus;
+                }
+
                 $DiskInfo.PartitionLayout.Add(
                     $PartitionIndex,
                     @{
-                        'NumberOfBlocks'   = $Partition.NumberOfBlocks;
-                        'BootPartition'    = $Partition.BootPartition;
-                        'PrimaryPartition' = $Partition.PrimaryPartition;
-                        'Size'             = $Partition.Size;
-                        'Index'            = $Partition.Index;
-                        'DiskIndex'        = $Partition.DiskIndex;
-                        'DriveLetter'      = $DriveLetter;
-                        'Bootable'         = $Partition.Bootable;
-                        'Name'             = [string]::Format('Disk #{0}, Partition #{1}', $MSFTDiskId, $PartitionIndex);
-                        'StartingOffset'   = $Partition.StartingOffset;
-                        'Status'           = $Partition.Status;
-                        'StatusInfo'       = $Partition.StatusInfo;
-                        'Type'             = $Partition.Type;
+                        'NumberOfBlocks'    = $Partition.NumberOfBlocks;
+                        'BootPartition'     = $Partition.BootPartition;
+                        'PrimaryPartition'  = $Partition.PrimaryPartition;
+                        'Size'              = $Partition.Size;
+                        'Index'             = $Partition.Index;
+                        'DiskIndex'         = $Partition.DiskIndex;
+                        'DriveLetter'       = $AdditionalPartitionData.DriveLetter;
+                        'Bootable'          = $Partition.Bootable;
+                        'Name'              = [string]::Format('Disk #{0}, Partition #{1}', $MSFTDiskId, $PartitionIndex);
+                        'StartingOffset'    = $Partition.StartingOffset;
+                        'Status'            = $Partition.Status;
+                        'StatusInfo'        = $Partition.StatusInfo;
+                        'Type'              = $Partition.Type;
+                        'IsBoot'            = $AdditionalPartitionData.IsBoot;
+                        'IsOffline'         = $AdditionalPartitionData.IsOffline;
+                        'IsReadOnly'        = $AdditionalPartitionData.IsReadOnly;
+                        'OperationalStatus' = $PartitionOperationalStatus
                     }
                 )
 
